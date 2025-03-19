@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Diagnosis Report | MediScan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: 
+                linear-gradient(rgba(8, 15, 40, 0.9), rgba(8, 15, 40, 0.9)),
+                url('https://images.unsplash.com/photo-1581595210407-578f0a6d253e?auto=format&fit=crop&w=1920'),
+                #080f28;
+            background-size: cover;
+            background-position: center;
+            color: #ffffff;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .xray-pattern {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 0L100 50 50 100 0 50 50 0" fill="none" stroke="%23fff" stroke-width="1"/></svg>');
+            background-size: 50px;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            max-width: 1200px;
+            margin: 5% auto;
+            padding: 40px;
+            background: rgba(16, 25, 48, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            animation: containerEntrance 1s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            gap: 40px;
+        }
+
+        @keyframes containerEntrance {
+            from { opacity: 0; transform: translateY(50px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .results-section {
+            flex: 1;
+            padding-right: 40px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .advice-section {
+            flex: 1;
+            padding-left: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+            color: #00e5ff;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .diagnosis-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            animation: itemEntrance 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes itemEntrance {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .diagnosis-item.positive {
+            border-left: 4px solid #ff4d4d;
+            background: rgba(255, 77, 77, 0.1);
+        }
+
+        .diagnosis-item.negative {
+            border-left: 4px solid #4dff88;
+            background: rgba(77, 255, 136, 0.1);
+        }
+
+        .status {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .positive .status {
+            color: #ff4d4d;
+        }
+
+        .negative .status {
+            color: #4dff88;
+        }
+
+        .medical-advice {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #00e5ff;
+        }
+
+        .advice-quote {
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 15px 0;
+        }
+
+        .upload-link {
+            display: inline-block;
+            background: #00e5ff;
+            color: #08152e;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .upload-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 229, 255, 0.4);
+        }
+
+        .particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(0, 229, 255, 0.5);
+            border-radius: 50%;
+            animation: particleFloat 20s infinite linear;
+        }
+
+        @keyframes particleFloat {
+            from { transform: translateY(100vh); }
+            to { transform: translateY(-100%); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                margin: 20px;
+                padding: 20px;
+            }
+            .results-section, .advice-section {
+                padding: 0;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="xray-pattern"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="results-section">
+            <h1>Diagnosis Report</h1>
+            
+            {% for condition, result in results.items() %}
+            <div class="diagnosis-item {{ 'positive' if result == 'Positive' else 'negative' }}" style="animation-delay: {{ loop.index0 * 0.2 }}s">
+                <div class="condition">{{ condition }}</div>
+                <div class="status">
+                    {{ result }} {% if result == 'Positive' %} ❌ {% else %} ✔️ {% endif %}
+                </div>
+                {% if result == 'Positive' %}
+                <div class="advice-quote">
+                    "Early detection is key - Please consult a healthcare professional immediately."
+                </div>
+                {% else %}
+                <div class="advice-quote">
+                    "No abnormalities detected - Maintain regular health check-ups."
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="advice-section">
+            <div class="medical-advice">
+                <h2>Health Recommendations</h2>
+                {% if 'Positive' in results.values() %}
+                <div class="advice-quote">
+                    "Your results indicate potential health concerns. Please:
+                    <ul>
+                        <li>Consult a pulmonologist within 24 hours</li>
+                        <li>Avoid strenuous activities</li>
+                        <li>Monitor your symptoms daily</li>
+                    </ul>
+                </div>
+                {% else %}
+                <div class="advice-quote">
+                    "All results appear normal. Recommended:
+                    <ul>
+                        <li>Continue regular health screenings</li>
+                        <li>Maintain a healthy lifestyle</li>
+                        <li>Stay updated with vaccinations</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="medical-advice">
+                <h2>Preventive Measures</h2>
+                <div class="advice-quote">
+                    "General health guidelines:
+                    <ul>
+                        <li>Practice good respiratory hygiene</li>
+                        <li>Wear masks in crowded areas</li>
+                        <li>Maintain proper ventilation indoors</li>
+                    </ul>
+                </div>
+            </div>
+
+            <center>
+                <a href="/" class="upload-link">Analyze Another Scan</a>
+            </center>
+        </div>
+    </div>
+
+    <script>
+        function createParticles() {
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.width = particle.style.height = Math.random() * 3 + 1 + 'px';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particles.appendChild(particle);
+            }
+        }
+        createParticles();
+    </script>
+</body>
+</html>
